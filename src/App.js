@@ -27,7 +27,7 @@ function App() {
     try {
       setLoading(true);
 
-      const res = await axios.post("https://imagegeolocator-backend.onrender.com", formData);
+      const res = await axios.post("https://imagegeolocator-backend.onrender.com/upload", formData);
 
       if (res.data.status === "success") {
         setResult(res.data.data);
