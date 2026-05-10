@@ -1,23 +1,114 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useState } from "react";
+import axios from "axios";
+import "./App.css";
 
 function App() {
+  const [file, setFile] = useState(null);
+  const [preview, setPreview] = useState(null);
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleFileChange = (e) => {
+    const selected = e.target.files[0];
+
+    if (selected) {
+      setFile(selected);
+      setPreview(URL.createObjectURL(selected));
+      setResult(null);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!file) return alert("Please select an image");
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      setLoading(true);
+
+      const res = await axios.post("https://imagegeolocator-backend.onrender.com", formData);
+
+      if (res.data.status === "success") {
+        setResult(res.data.data);
+      } else {
+        alert(res.data.message);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error uploading image");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className="app">
+      <div className="card">
+        <h1>ImageGeoLocator 🌍</h1>
+        <p className="subtitle">Upload an image to detect GPS location</p>
+
+        <label className="upload-box">
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            hidden
+          />
+
+          {preview ? (
+            <img src={preview} alt="preview" className="preview" />
+          ) : (
+            <div className="placeholder">
+              <span>📸</span>
+              <p>Click to Upload Image</p>
+            </div>
+          )}
+        </label>
+
+        <button onClick={handleUpload} disabled={loading}>
+          {loading ? "Processing..." : "Upload & Locate"}
+        </button>
+
+        {result && (
+          <div className="result">
+            <h3>📍 Location Found</h3>
+
+            <div className="result-item">
+              <span>Latitude</span>
+              <p>{result.lat || "N/A"}</p>
+            </div>
+
+            <div className="result-item">
+              <span>Longitude</span>
+              <p>{result.lon || "N/A"}</p>
+            </div>
+
+            <div className="result-item">
+              <span>Date & Time</span>
+              <p>{result.date_time || "N/A"}</p>
+            </div>
+
+            <div className="result-item">
+              <span>Camera Brand</span>
+              <p>{result.camera_make || "N/A"}</p>
+            </div>
+
+            <div className="result-item">
+              <span>Camera Model</span>
+              <p>{result.camera_model || "N/A"}</p>
+            </div>
+
+            <a
+              href={`https://www.google.com/maps?q=${result.lat},${result.lon}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Open in Google Maps →
+            </a>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
